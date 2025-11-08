@@ -7,175 +7,302 @@
 
 ---
 
-## フェーズ1: 環境準備・設計（1-2日）
+## フェーズ1: プロジェクトセットアップ（1-2日）
 
-### 1.1 AWS環境セットアップ
-**所要時間**: 2-3時間
-
-- [ ] AWSアカウント確認、IAMユーザー作成
-- [ ] AWS CLIインストール・設定
-- [ ] リージョン選択（SES対応リージョン: us-east-1, us-west-2, eu-west-1等）
-- [ ] S3バケット作成
-  ```bash
-  aws s3 mb s3://ses-received-emails-{account-id} --region us-east-1
-  ```
-- [ ] S3バケットポリシー設定（SES書き込み権限）
-- [ ] S3ライフサイクルルール設定（7日後削除）
-
-### 1.2 SES初期設定
+### 1.1 開発環境セットアップ
 **所要時間**: 1-2時間
 
-- [ ] SESコンソールでドメイン追加
-- [ ] ドメイン認証用TXTレコード取得
-- [ ] Route53にTXTレコード追加
-- [ ] ドメイン認証完了確認（最大72時間）
-- [ ] DKIM有効化、CNAMEレコード取得
+- [ ] Node.js 20.x インストール確認
+- [ ] pnpm インストール（`npm install -g pnpm`）
+- [ ] AWS CLI v2 インストール・設定
+- [ ] リージョン選択（SES対応リージョン: us-east-1, us-west-2, eu-west-1等）
+- [ ] 環境変数ファイル作成
+  ```bash
+  cp .env.example .env
+  # DOMAIN_NAME, GMAIL_USER等を設定
+  ```
 
-### 1.3 IAMロール作成
-**所要時間**: 1時間
-
-- [ ] Lambda実行ロール作成
-  - S3読み取り権限
-  - CloudWatch Logs書き込み権限
-  - SES送信権限（オプション）
-- [ ] ポリシードキュメント作成
-
-### 1.4 アーキテクチャドキュメント作成
+### 1.2 pnpm workspaceセットアップ
 **所要時間**: 2-3時間
 
-- [x] システム構成図作成
-- [x] データフロー図作成
-- [x] セキュリティ設計書作成
+- [ ] パッケージディレクトリ作成
+  ```bash
+  mkdir -p packages/{cdk,lambda-email-forwarder,shared,scripts}
+  ```
+- [ ] 各パッケージのpackage.json作成
+- [ ] pnpm依存関係インストール
+  ```bash
+  pnpm install
+  ```
+- [ ] ビルド動作確認
+  ```bash
+  pnpm build
+  ```
+
+### 1.3 CDK初期化
+**所要時間**: 1-2時間
+
+- [ ] CDKパッケージセットアップ
+  ```bash
+  cd packages/cdk
+  pnpm add -D aws-cdk aws-cdk-lib constructs
+  pnpm add -D @types/node typescript
+  ```
+- [ ] CDK Bootstrap実行
+  ```bash
+  pnpm cdk bootstrap
+  ```
+- [ ] スタックファイル作成
+  - `lib/stacks/email-forwarding-stack.ts`
+  - `bin/app.ts`
+
+### 1.4 Lambda初期化
+**所要時間**: 1-2時間
+
+- [ ] Lambda関数パッケージセットアップ
+  ```bash
+  cd packages/lambda-email-forwarder
+  pnpm add @aws-sdk/client-s3 @aws-sdk/client-secrets-manager
+  pnpm add googleapis nodemailer
+  pnpm add -D @types/node esbuild
+  ```
+- [ ] ディレクトリ構成作成
+  ```bash
+  mkdir -p src/{services,utils,types}
+  touch src/index.ts
+  ```
 
 **成果物**:
-- `docs/architecture.md`
-- AWSリソース一覧
-- IAMポリシードキュメント
+- pnpm workspaceセットアップ完了
+- CDK初期化完了
+- Lambda開発環境準備完了
 
 ---
 
-## フェーズ2: メール受信実装（2-3日）
+## フェーズ2: CDK基盤Construct実装（1-2日）
 
-### 2.1 Route53 DNS設定
-**所要時間**: 1時間
+### 2.1 低レベルConstruct実装
+**所要時間**: 3-4時間
+
+- [ ] IamRolesConstruct実装
+  - Lambda実行ロール
+  - S3読み取り権限
+  - Secrets Manager読み取り権限
+  - CloudWatch Logs書き込み権限
+- [ ] SecretsConstruct実装
+  - Gmail API認証情報保存用Secret
+  - SES SMTP認証情報保存用Secret
+
+### 2.2 S3BucketConstruct実装
+**所要時間**: 2-3時間
+
+- [ ] S3バケット作成
+  - 暗号化: SSE-S3
+  - パブリックアクセスブロック
+  - バージョニング無効
+- [ ] バケットポリシー設定
+  - SES書き込み権限
+  - Lambda読み取り権限
+- [ ] ライフサイクルルール設定
+  - incoming/ プレフィックス: 7日後削除
+
+### 2.3 EmailReceivingConstruct実装
+**所要時間**: 3-4時間
+
+- [ ] 高レベルConstruct作成
+- [ ] 内部で低レベルConstructを組み合わせ
+  - S3BucketConstruct
+  - LambdaFunctionConstruct（後ほど実装）
+  - SesReceiptRuleConstruct（後ほど実装）
+- [ ] Construct間の依存関係設定
+
+**成果物**:
+- `packages/cdk/lib/constructs/low-level/*.ts`
+- `packages/cdk/lib/constructs/high-level/email-receiving-construct.ts`
+
+---
+
+## フェーズ3: メール受信実装（2-3日）
+
+### 3.1 Lambda関数実装（メール転送）
+**所要時間**: 1日
+
+#### Infrastructure Layer
+- [ ] S3Client実装（AWS SDK v3ラッパー）
+  - getObject
+  - deleteObject
+- [ ] GmailClient実装（Gmail APIラッパー）
+  - sendMessage
+  - authenticate
+
+#### Domain Services Layer
+- [ ] S3Service実装
+  - getEmailFromS3(bucket, key)
+  - deleteEmailFromS3(bucket, key)
+- [ ] GmailService実装
+  - sendEmail(message)
+  - createDraft(message)
+- [ ] EmailParserService実装
+  - parseMime(raw)
+  - extractHeaders(mime)
+  - extractAttachments(mime)
+
+#### Use Case Layer
+- [ ] EmailForwarderService実装
+  - forwardEmail(s3Event)
+  - ビジネスロジック調整
+
+#### Handler Layer
+- [ ] index.ts実装
+  - S3イベントハンドラー
+  - エラーハンドリング
+  - ロギング
+
+### 3.2 Lambda CDK Construct実装
+**所要時間**: 2-3時間
+
+- [ ] LambdaFunctionConstruct実装
+  - ランタイム: Node.js 20.x
+  - メモリ: 512MB
+  - タイムアウト: 30秒
+  - 環境変数: GMAIL_USER, S3_BUCKET, LOG_LEVEL
+- [ ] esbuildでバンドル設定
+- [ ] Lambda Layerの設定（オプション）
+
+### 3.3 SES受信ルールConstruct実装
+**所要時間**: 2-3時間
+
+- [ ] SesReceiptRuleConstruct実装
+  - Receipt Rule Set作成またはデフォルト使用
+  - Receipt Rule追加
+    - 受信者条件: ドメイン全体
+    - アクション1: S3保存
+    - アクション2: Lambda起動
+  - TLS必須
+  - スパム・ウイルススキャン有効
+
+### 3.4 Route53 DNS設定
+**所要時間**: 1-2時間
 
 - [ ] MXレコード追加
   ```
-  example.com MX 10 inbound-smtp.us-east-1.amazonaws.com
-  ```
-- [ ] SPFレコード追加
-  ```
-  example.com TXT "v=spf1 include:amazonses.com ~all"
-  ```
-- [ ] DKIMレコード追加（SESから取得した3つのCNAME）
-- [ ] DMARCレコード追加
-  ```
-  _dmarc.example.com TXT "v=DMARC1; p=quarantine; rua=mailto:dmarc@example.com"
+  example.com MX 10 inbound-smtp.{region}.amazonaws.com
   ```
 - [ ] DNS伝播確認（dig/nslookup）
-
-### 2.2 SES受信ルール設定
-**所要時間**: 1-2時間
-
-- [ ] Receipt Rule Set作成（またはデフォルト使用）
-- [ ] Receipt Rule追加
-  - 受信者条件: `example.com`
-  - アクション1: S3保存（`s3://bucket/incoming/`）
-  - アクション2: Lambda起動（後ほど設定）
-- [ ] アクティブルールセットとして設定
-- [ ] テストメール送信（SES Mailbox Simulator使用）
-
-### 2.3 Lambda関数開発（メール転送）
-**所要時間**: 1日
-
-#### 環境構築
-- [ ] Lambda関数作成（Python 3.12）
-- [ ] 開発環境セットアップ
   ```bash
-  mkdir lambda-email-forwarder
-  cd lambda-email-forwarder
-  python -m venv venv
-  source venv/bin/activate
-  pip install boto3 google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client
+  dig MX example.com
   ```
 
-#### コード実装
-- [ ] S3からメールオブジェクト取得
-- [ ] MIMEメッセージ解析
-- [ ] Gmail API認証設定
-- [ ] Gmail API経由でメール転送
-- [ ] エラーハンドリング実装
-- [ ] ログ出力実装
-
-#### デプロイ
-- [ ] 依存関係をLayerまたはデプロイパッケージに含める
-- [ ] 環境変数設定
-  - `GMAIL_USER`: 転送先アドレス
-  - `S3_BUCKET`: バケット名
-- [ ] Lambda関数デプロイ
-- [ ] S3トリガー設定（ObjectCreated:Put）
-
-### 2.4 Gmail API設定
+### 3.5 Gmail API設定
 **所要時間**: 2-3時間
 
 - [ ] Google Cloud Consoleでプロジェクト作成
 - [ ] Gmail API有効化
-- [ ] OAuth 2.0認証情報作成（サービスアカウントまたはOAuth）
+- [ ] OAuth 2.0認証情報作成
 - [ ] 認証情報JSONダウンロード
-- [ ] Lambdaに認証情報設定（環境変数またはSecrets Manager）
+- [ ] Secrets Managerに認証情報保存
+  ```bash
+  aws secretsmanager create-secret \
+    --name gmail-api-credentials \
+    --secret-string file://credentials.json
+  ```
 - [ ] 初回認証フロー実行
 
-### 2.5 受信テスト
+### 3.6 受信テスト
 **所要時間**: 2-3時間
 
+- [ ] CDKデプロイ
+  ```bash
+  pnpm --filter @r53-gmail/cdk deploy
+  ```
 - [ ] 外部メールアドレスからテストメール送信
-- [ ] S3にメール保存確認
-- [ ] Lambda実行ログ確認
+- [ ] CloudWatch Logsで実行ログ確認
 - [ ] Gmailに転送されたメール確認
 - [ ] 添付ファイル付きメールテスト
 - [ ] HTMLメールテスト
 - [ ] 大容量メールテスト（10MB以上）
 
 **成果物**:
-- Lambda関数コード
-- デプロイパッケージ
+- `packages/lambda-email-forwarder/src/**/*.ts`
+- `packages/cdk/lib/constructs/low-level/lambda-function-construct.ts`
+- `packages/cdk/lib/constructs/low-level/ses-receipt-rule-construct.ts`
 - 受信テスト結果レポート
 
 ---
 
-## フェーズ3: メール送信実装（2-3日）
+## フェーズ4: メール送信実装（2-3日）
 
-### 3.1 SES送信設定
+### 4.1 EmailSendingConstruct実装
+**所要時間**: 3-4時間
+
+- [ ] SesDomainIdentityConstruct実装
+  - SESドメイン認証
+  - ドメイン認証TXTレコード
+- [ ] DkimConfigConstruct実装
+  - DKIM有効化
+  - DKIMのCNAMEレコード（3つ）
+- [ ] SpfRecordConstruct実装
+  - SPF TXTレコード
+  ```
+  example.com TXT "v=spf1 include:amazonses.com ~all"
+  ```
+- [ ] DmarcRecordConstruct実装
+  - DMARC TXTレコード
+  ```
+  _dmarc.example.com TXT "v=DMARC1; p=quarantine; rua=mailto:dmarc@example.com"
+  ```
+
+### 4.2 Route53自動DNS設定
+**所要時間**: 2-3時間
+
+- [ ] EmailSendingConstructにRoute53統合実装
+- [ ] hostedZoneId指定時のDNSレコード自動作成
+  - SESドメイン認証TXTレコード
+  - DKIM CNAMEレコード（3つ）
+  - SPF TXTレコード
+  - DMARC TXTレコード
+- [ ] 手動DNS設定の手順書作成（hostedZoneId未指定時）
+
+### 4.3 SES SMTP認証情報設定
 **所要時間**: 1-2時間
 
-- [ ] SMTP認証情報生成（SESコンソール）
-- [ ] SMTPユーザー名・パスワード取得
+- [ ] SESコンソールでSMTP認証情報生成
+- [ ] Secrets Managerに保存
+  ```bash
+  aws secretsmanager create-secret \
+    --name ses-smtp-credentials \
+    --secret-string '{"username":"AKIAEXAMPLE","password":"secret"}'
+  ```
 - [ ] サンドボックス環境での送信テスト
 - [ ] 本番移行申請（必要に応じて）
-  - 送信理由説明
-  - バウンス・苦情処理プロセス説明
 
-### 3.2 SPF/DKIM/DMARC検証
-**所要時間**: 1時間
-
-- [ ] SPFレコード検証（MXToolbox等）
-- [ ] DKIMレコード検証
-- [ ] DMARCレコード検証
-- [ ] テスト送信でヘッダー確認
-
-### 3.3 Gmail送信設定
+### 4.4 Gmail送信設定
 **所要時間**: 1時間
 
 - [ ] Gmailにログイン
 - [ ] 設定 > アカウント > 他のメールアドレスを追加
 - [ ] カスタムドメインアドレス入力（`user@example.com`）
 - [ ] SMTP設定
-  - SMTPサーバー: `email-smtp.us-east-1.amazonaws.com`
+  - SMTPサーバー: `email-smtp.{region}.amazonaws.com`
   - ポート: 587
-  - ユーザー名・パスワード: SES SMTP認証情報
+  - TLS有効
+  - ユーザー名・パスワード: Secrets Managerから取得
 - [ ] 確認メール受信・認証
 
-### 3.4 送信テスト
+### 4.5 SPF/DKIM/DMARC検証
+**所要時間**: 1-2時間
+
+- [ ] DNSレコード伝播確認
+  ```bash
+  dig TXT example.com
+  dig TXT _dmarc.example.com
+  dig CNAME {dkim-selector}._domainkey.example.com
+  ```
+- [ ] SPFレコード検証（MXToolbox等）
+- [ ] DKIMレコード検証
+- [ ] DMARCレコード検証
+
+### 4.6 送信テスト
 **所要時間**: 2-3時間
 
 - [ ] Gmailからカスタムドメインで送信
@@ -189,15 +316,42 @@
 - [ ] バウンス処理確認
 
 **成果物**:
-- SMTP設定手順書
+- `packages/cdk/lib/constructs/high-level/email-sending-construct.ts`
+- `packages/cdk/lib/constructs/low-level/ses-*.ts`
 - 送信テスト結果レポート
 - スパムスコア評価結果
 
 ---
 
-## フェーズ4: テスト・監視（1-2日）
+## フェーズ5: 監視・テスト（1-2日）
 
-### 4.1 統合テスト
+### 5.1 MonitoringConstruct実装
+**所要時間**: 3-4時間
+
+- [ ] CloudWatchDashboardConstruct実装
+  - Lambda実行回数・エラー率・実行時間
+  - S3バケットサイズ
+  - カスタムメトリクス（EmailForwarding/Success, Error）
+- [ ] AlarmsConstruct実装
+  - Lambda Error Rate > 5%
+  - Lambda Duration > 25秒
+  - SES Bounce Rate > 10%（オプション）
+- [ ] SNSトピック作成
+  - アラート通知先設定
+
+### 5.2 ユニットテスト実装
+**所要時間**: 4-5時間
+
+- [ ] Lambda関数ユニットテスト
+  - S3Service テスト
+  - GmailService テスト
+  - EmailParserService テスト
+  - EmailForwarderService テスト
+- [ ] CDK Constructユニットテスト
+  - スタックリソース検証
+  - プロパティ検証
+
+### 5.3 統合テスト
 **所要時間**: 3-4時間
 
 - [ ] エンドツーエンドテスト（送受信）
@@ -206,92 +360,66 @@
 - [ ] エラーケーステスト
   - 不正なメールフォーマット
   - 大容量添付ファイル（25MB超）
-  - Lambda タイムアウト
+  - Lambdaタイムアウト
 
-### 4.2 パフォーマンステスト
+### 5.4 パフォーマンステスト
 **所要時間**: 2時間
 
 - [ ] メール配送遅延測定
 - [ ] Lambda実行時間測定
 - [ ] スループットテスト
 
-### 4.3 監視・アラート設定
-**所要時間**: 3-4時間
-
-- [ ] CloudWatch Logsグループ確認
-- [ ] CloudWatch Metricsダッシュボード作成
-  - SES送受信メトリクス
-  - Lambda実行メトリクス
-  - S3ストレージメトリクス
-- [ ] CloudWatch Alarms設定
-  - Lambda Error Rate > 5%
-  - SES Bounce Rate > 10%
-  - SES Complaint Rate > 0.5%
-- [ ] SNSトピック作成（アラート通知用）
-- [ ] メール通知設定
-
-### 4.4 セキュリティ監査
-**所要時間**: 2時間
-
-- [ ] IAMポリシー最小権限確認
-- [ ] S3バケットパブリックアクセス無効確認
-- [ ] Lambda環境変数暗号化確認
-- [ ] TLS/SSL証明書確認
-
 **成果物**:
+- `packages/cdk/lib/constructs/high-level/monitoring-construct.ts`
+- `packages/lambda-email-forwarder/test/**/*.test.ts`
+- `packages/cdk/test/**/*.test.ts`
 - テストケース一覧
 - テスト結果レポート
 - CloudWatchダッシュボード
-- アラート設定ドキュメント
 
 ---
 
-## フェーズ5: ドキュメント・運用準備（1日）
+## フェーズ6: ドキュメント・運用準備（1日）
 
-### 5.1 ドキュメント作成
-**所要時間**: 4-5時間
+### 6.1 セットアップドキュメント作成
+**所要時間**: 3-4時間
 
-- [ ] README.md更新
-- [ ] セットアップ手順書
+- [ ] セットアップ手順書作成
   - 前提条件
   - ステップバイステップガイド
-  - スクリーンショット付き
+  - 環境変数設定
+  - デプロイ手順
 - [ ] トラブルシューティングガイド
   - よくある問題と解決方法
   - エラーメッセージ一覧
 - [ ] 運用マニュアル
   - 日常運用タスク
-  - バックアップ・リストア手順
-  - スケーリング手順
-- [ ] APIドキュメント（Lambda関数）
+  - ログ確認方法
+  - アラート対応手順
 
-### 5.2 IaC化（オプション）
-**所要時間**: 4-6時間
-
-- [ ] Terraformまたは AWS CDKで実装
-- [ ] リソース定義
-  - S3バケット
-  - Lambda関数
-  - IAMロール・ポリシー
-  - SES設定（一部手動）
-  - CloudWatchアラーム
-- [ ] `terraform plan`実行、検証
-- [ ] ドライラン確認
-
-### 5.3 CI/CD構築（オプション）
+### 6.2 CI/CDパイプライン構築（オプション）
 **所要時間**: 3-4時間
 
 - [ ] GitHub Actionsワークフロー作成
+  ```yaml
+  .github/workflows/deploy.yml
+  ```
 - [ ] Lambdaデプロイパイプライン
 - [ ] テスト自動化
 - [ ] シークレット管理（GitHub Secrets）
+
+### 6.3 コスト最適化確認
+**所要時間**: 1-2時間
+
+- [ ] CloudWatch予算アラート設定
+- [ ] コスト見積もり確認
+- [ ] 不要リソースのクリーンアップ
 
 **成果物**:
 - `docs/setup-guide.md`
 - `docs/troubleshooting.md`
 - `docs/operations-manual.md`
-- `terraform/` または `cdk/` ディレクトリ
-- `.github/workflows/` デプロイワークフロー
+- `.github/workflows/deploy.yml`
 
 ---
 
@@ -299,22 +427,24 @@
 
 | マイルストーン | 完了条件 | 期日 |
 |---------------|---------|------|
-| M1: 環境準備完了 | AWS環境、SES認証完了 | Day 2 |
-| M2: 受信機能実装完了 | テストメール受信成功 | Day 5 |
-| M3: 送信機能実装完了 | カスタムドメインで送信成功 | Day 7 |
-| M4: テスト完了 | すべてのテストケース合格 | Day 9 |
-| M5: 本番リリース | ドキュメント完成、運用開始 | Day 10 |
+| M1: 環境準備完了 | pnpm workspace、CDK、Lambda初期化完了 | Day 2 |
+| M2: CDK基盤実装完了 | IAM、Secrets、S3のConstruct実装完了 | Day 3 |
+| M3: 受信機能実装完了 | テストメール受信成功 | Day 5 |
+| M4: 送信機能実装完了 | カスタムドメインで送信成功 | Day 7 |
+| M5: テスト完了 | すべてのテストケース合格 | Day 9 |
+| M6: 本番リリース | ドキュメント完成、運用開始 | Day 10 |
 
 ---
 
 ## リスク管理
 
 | リスク | 軽減策 | コンティンジェンシープラン |
-|--------|--------|--------------------------|
-| SES認証遅延（最大72時間） | 早期に申請開始 | 外部転送サービス一時利用 |
+|--------|--------|-----------------------------|
+| SESドメイン認証遅延（最大72時間） | 早期に申請開始 | 外部転送サービス一時利用 |
 | Gmail API認証エラー | ドキュメント事前確認 | 代替メール転送方法検討 |
 | Lambda実装バグ | ユニットテスト実施 | ロールバック手順準備 |
 | DNS伝播遅延 | TTL短縮（300秒） | 伝播待機時間を計画に含める |
+| CDKデプロイエラー | 差分確認（cdk diff）実施 | 手動ロールバック手順準備 |
 | コスト超過 | CloudWatch予算アラート設定 | 使用量上限設定 |
 
 ---
@@ -322,17 +452,42 @@
 ## 開発環境
 
 ### 必要なツール
-- AWS CLI (v2)
-- Python 3.12
-- Node.js 20.x（CDK使用時）
-- Terraform 1.5+（IaC使用時）
+- Node.js 20.x
+- pnpm 8.0+
+- AWS CLI v2
 - Git
+- TypeScript 5.x
 
 ### 推奨IDEプラグイン
 - AWS Toolkit for VS Code
-- Python
-- Terraform
-- YAML
+- ESLint
+- Prettier
+- Jest Runner
+
+### 開発コマンド
+
+```bash
+# 依存関係インストール
+pnpm install
+
+# ビルド
+pnpm build
+
+# テスト
+pnpm test
+pnpm test:unit
+pnpm test:integration
+
+# CDKコマンド
+pnpm --filter @r53-gmail/cdk synth    # テンプレート生成
+pnpm --filter @r53-gmail/cdk diff     # 差分確認
+pnpm --filter @r53-gmail/cdk deploy   # デプロイ
+pnpm --filter @r53-gmail/cdk destroy  # スタック削除
+
+# Lint & Format
+pnpm lint
+pnpm format
+```
 
 ---
 
@@ -342,7 +497,7 @@
 - [ ] AWSアカウントアクセス権限確認
 - [ ] Route53でドメイン管理確認
 - [ ] Gmailアカウント準備
-- [ ] 開発環境セットアップ完了
-- [ ] プロジェクトリポジトリ作成
+- [ ] Node.js 20.x、pnpm、AWS CLI導入完了
+- [ ] プロジェクトリポジトリクローン完了
 
 準備完了後、**フェーズ1**から順次実装を開始してください。

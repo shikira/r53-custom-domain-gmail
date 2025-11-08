@@ -45,7 +45,7 @@ export class IamRolesConstruct extends Construct {
         {
           id: 'AwsSolutions-IAM5',
           reason: 'Wildcard required for S3 object access in email bucket',
-          appliesTo: ['Resource::<S3BucketEmailBucket92AABDE7.Arn>/*'],
+          appliesTo: ['Resource::<EmailReceivingBucketEmailBucket00424D61.Arn>/*'],
         },
       ],
       true

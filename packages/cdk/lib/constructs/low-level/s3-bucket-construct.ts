@@ -1,12 +1,12 @@
 import { Construct } from 'constructs';
+import * as cdk from 'aws-cdk-lib';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import { Duration, RemovalPolicy } from 'aws-cdk-lib';
 import { NagSuppressions } from 'cdk-nag';
 
 export interface S3BucketConstructProps {
-  readonly sesRegion: string;
-  readonly accountId: string;
+  readonly domainName: string;
 }
 
 export class S3BucketConstruct extends Construct {
@@ -14,6 +14,8 @@ export class S3BucketConstruct extends Construct {
 
   constructor(scope: Construct, id: string, props: S3BucketConstructProps) {
     super(scope, id);
+
+    const stack = cdk.Stack.of(this);
 
     this.bucket = new s3.Bucket(this, 'EmailBucket', {
       encryption: s3.BucketEncryption.S3_MANAGED,
@@ -40,7 +42,7 @@ export class S3BucketConstruct extends Construct {
         resources: [this.bucket.arnForObjects('incoming/*')],
         conditions: {
           StringEquals: {
-            'AWS:SourceAccount': props.accountId,
+            'AWS:SourceAccount': stack.account,
           },
         },
       })

@@ -1,6 +1,5 @@
 node_modules/
 dist/
-lib/
 *.js
 *.d.ts
 !jest.config.js

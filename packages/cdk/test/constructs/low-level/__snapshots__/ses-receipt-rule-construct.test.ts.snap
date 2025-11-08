@@ -1,0 +1,206 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`SesReceiptRuleConstruct > should match snapshot 1`] = `
+{
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": {
+    "TestBucket560B80BC": {
+      "DeletionPolicy": "Retain",
+      "Type": "AWS::S3::Bucket",
+      "UpdateReplacePolicy": "Retain",
+    },
+    "TestBucketPolicyBA12ED38": {
+      "Properties": {
+        "Bucket": {
+          "Ref": "TestBucket560B80BC",
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:PutObject",
+              "Condition": {
+                "StringEquals": {
+                  "aws:SourceAccount": {
+                    "Ref": "AWS::AccountId",
+                  },
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ses.amazonaws.com",
+              },
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    {
+                      "Fn::GetAtt": [
+                        "TestBucket560B80BC",
+                        "Arn",
+                      ],
+                    },
+                    "/incoming/*",
+                  ],
+                ],
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::S3::BucketPolicy",
+    },
+    "TestLambda2F70C45E": {
+      "DependsOn": [
+        "TestRole6C9272DF",
+      ],
+      "Properties": {
+        "Code": {
+          "ZipFile": "exports.handler = async () => ({ statusCode: 200 });",
+        },
+        "Handler": "index.handler",
+        "Role": {
+          "Fn::GetAtt": [
+            "TestRole6C9272DF",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs20.x",
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "TestLambdaAllowSes8375968E": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "TestLambda2F70C45E",
+            "Arn",
+          ],
+        },
+        "Principal": "ses.amazonaws.com",
+        "SourceAccount": {
+          "Ref": "AWS::AccountId",
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
+    "TestRole6C9272DF": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "TestSesReceiptRuleRuleSetC5895F2D": {
+      "Metadata": {
+        "cdk_nag": {
+          "rules_to_suppress": [
+            {
+              "id": "AwsSolutions-SES4",
+              "reason": "TLS is enforced via TlsPolicy.REQUIRE",
+            },
+          ],
+        },
+      },
+      "Properties": {
+        "RuleSetName": "example.com-rule-set",
+      },
+      "Type": "AWS::SES::ReceiptRuleSet",
+    },
+    "TestSesReceiptRuleRuleSetRuleE037AB0E": {
+      "DependsOn": [
+        "TestBucketPolicyBA12ED38",
+        "TestLambdaAllowSes8375968E",
+      ],
+      "Metadata": {
+        "cdk_nag": {
+          "rules_to_suppress": [
+            {
+              "id": "AwsSolutions-SES4",
+              "reason": "TLS is enforced via TlsPolicy.REQUIRE",
+            },
+          ],
+        },
+      },
+      "Properties": {
+        "Rule": {
+          "Actions": [
+            {
+              "S3Action": {
+                "BucketName": {
+                  "Ref": "TestBucket560B80BC",
+                },
+                "ObjectKeyPrefix": "incoming/",
+              },
+            },
+            {
+              "LambdaAction": {
+                "FunctionArn": {
+                  "Fn::GetAtt": [
+                    "TestLambda2F70C45E",
+                    "Arn",
+                  ],
+                },
+              },
+            },
+          ],
+          "Enabled": true,
+          "Recipients": [
+            "example.com",
+          ],
+          "ScanEnabled": true,
+          "TlsPolicy": "Require",
+        },
+        "RuleSetName": {
+          "Ref": "TestSesReceiptRuleRuleSetC5895F2D",
+        },
+      },
+      "Type": "AWS::SES::ReceiptRule",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;

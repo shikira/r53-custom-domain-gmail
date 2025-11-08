@@ -272,6 +272,34 @@ exports[`EmailForwardingStack > matches snapshot 1`] = `
               ],
               "Sid": "DenyInsecureTransport",
             },
+            {
+              "Action": "s3:PutObject",
+              "Condition": {
+                "StringEquals": {
+                  "aws:SourceAccount": {
+                    "Ref": "AWS::AccountId",
+                  },
+                },
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ses.amazonaws.com",
+              },
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    {
+                      "Fn::GetAtt": [
+                        "EmailReceivingBucketEmailBucket00424D61",
+                        "Arn",
+                      ],
+                    },
+                    "/incoming/*",
+                  ],
+                ],
+              },
+            },
           ],
           "Version": "2012-10-17",
         },
@@ -448,6 +476,22 @@ exports[`EmailForwardingStack > matches snapshot 1`] = `
       },
       "Type": "AWS::Lambda::Function",
     },
+    "LambdaFunctionEmailForwarderAllowSes97910D81": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "LambdaFunctionEmailForwarder40AF6711",
+            "Arn",
+          ],
+        },
+        "Principal": "ses.amazonaws.com",
+        "SourceAccount": {
+          "Ref": "AWS::AccountId",
+        },
+      },
+      "Type": "AWS::Lambda::Permission",
+    },
     "SecretsGmailApiSecret55D55BD2": {
       "DeletionPolicy": "Delete",
       "Metadata": {
@@ -487,6 +531,72 @@ exports[`EmailForwardingStack > matches snapshot 1`] = `
       },
       "Type": "AWS::SecretsManager::Secret",
       "UpdateReplacePolicy": "Delete",
+    },
+    "SesReceiptRuleRuleSet9E4A4A56": {
+      "Metadata": {
+        "cdk_nag": {
+          "rules_to_suppress": [
+            {
+              "id": "AwsSolutions-SES4",
+              "reason": "TLS is enforced via TlsPolicy.REQUIRE",
+            },
+          ],
+        },
+      },
+      "Properties": {
+        "RuleSetName": "example.com-rule-set",
+      },
+      "Type": "AWS::SES::ReceiptRuleSet",
+    },
+    "SesReceiptRuleRuleSetRule73889BBF": {
+      "DependsOn": [
+        "EmailReceivingBucketEmailBucketPolicy97EE47A9",
+        "LambdaFunctionEmailForwarderAllowSes97910D81",
+      ],
+      "Metadata": {
+        "cdk_nag": {
+          "rules_to_suppress": [
+            {
+              "id": "AwsSolutions-SES4",
+              "reason": "TLS is enforced via TlsPolicy.REQUIRE",
+            },
+          ],
+        },
+      },
+      "Properties": {
+        "Rule": {
+          "Actions": [
+            {
+              "S3Action": {
+                "BucketName": {
+                  "Ref": "EmailReceivingBucketEmailBucket00424D61",
+                },
+                "ObjectKeyPrefix": "incoming/",
+              },
+            },
+            {
+              "LambdaAction": {
+                "FunctionArn": {
+                  "Fn::GetAtt": [
+                    "LambdaFunctionEmailForwarder40AF6711",
+                    "Arn",
+                  ],
+                },
+              },
+            },
+          ],
+          "Enabled": true,
+          "Recipients": [
+            "example.com",
+          ],
+          "ScanEnabled": true,
+          "TlsPolicy": "Require",
+        },
+        "RuleSetName": {
+          "Ref": "SesReceiptRuleRuleSet9E4A4A56",
+        },
+      },
+      "Type": "AWS::SES::ReceiptRule",
     },
   },
   "Rules": {

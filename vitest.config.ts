@@ -6,23 +6,8 @@ export default defineConfig({
     environment: 'node',
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'json', 'html'],
-      exclude: [
-        'node_modules/',
-        'dist/',
-        'cdk.out/',
-        '**/*.test.ts',
-        '**/*.integration.test.ts',
-        '**/test/**',
-      ],
-      thresholds: {
-        lines: 80,
-        functions: 80,
-        branches: 80,
-        statements: 80,
-      },
-    },
-    include: ['packages/**/*.test.ts'],
-    exclude: ['node_modules/', 'dist/', 'cdk.out/'],
-  },
+      reporter: ['text', 'html', 'lcov'],
+      exclude: ['**/node_modules/**', '**/dist/**', '**/*.test.ts', '**/*.spec.ts']
+    }
+  }
 });

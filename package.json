@@ -1,0 +1,26 @@
+{
+  "name": "r53-custom-domain-gmail",
+  "version": "1.0.0",
+  "private": true,
+  "packageManager": "pnpm@10.16.1",
+  "scripts": {
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "test:unit": "turbo run test:unit",
+    "test:integration": "turbo run test:integration",
+    "test:coverage": "turbo run test:coverage",
+    "test:ui": "turbo run test:ui",
+    "lint": "turbo run lint",
+    "lint:fix": "turbo run lint:fix",
+    "synth": "pnpm --filter @r53-gmail/cdk synth",
+    "diff": "pnpm --filter @r53-gmail/cdk diff",
+    "deploy": "pnpm --filter @r53-gmail/cdk deploy",
+    "destroy": "pnpm --filter @r53-gmail/cdk destroy"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.3",
+    "vitest": "^2.1.8",
+    "@vitest/ui": "^2.1.8",
+    "@vitest/coverage-v8": "^2.1.8"
+  }
+}

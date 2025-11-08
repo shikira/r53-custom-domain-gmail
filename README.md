@@ -85,23 +85,25 @@ r53-custom-domain-gmail/
 ### 開発コマンド
 
 ```bash
-# ビルド
+# ビルド（Turborepo並列実行）
 pnpm build
 
-# テスト
+# テスト（Vitest）
 pnpm test
 pnpm test:unit
 pnpm test:integration
+pnpm test:coverage
+pnpm test:ui
 
 # Lint
 pnpm lint
 pnpm lint:fix
 
 # デプロイ
-pnpm --filter @r53-gmail/cdk deploy
+pnpm deploy
 
 # スタック削除
-pnpm --filter @r53-gmail/cdk destroy
+pnpm destroy
 ```
 
 ## コスト見積もり

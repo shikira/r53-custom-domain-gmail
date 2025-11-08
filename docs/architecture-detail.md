@@ -385,6 +385,7 @@ JSON形式で出力し、CloudWatch Logs Insightsで検索可能。
 **Unit Tests**:
 - 個別サービスクラスのテスト
 - モックを使用した独立テスト
+- Vitestのvi.mock()でモック化
 
 **Integration Tests**:
 - サービス間の統合テスト
@@ -398,10 +399,12 @@ JSON形式で出力し、CloudWatch Logs Insightsで検索可能。
 
 **Stackテスト**: リソース数、プロパティの検証
 **Constructテスト**: 個別Constructの動作検証
+**スナップショットテスト**: CloudFormationテンプレートの変更検出
 
 **テストツール**:
+- Vitest: テストフレームワーク（Jest互換、高速）
 - CDK Assertions: CloudFormationテンプレート検証
-- Jest: テストフレームワーク
+- toMatchSnapshot(): スナップショットテスト
 
 ---
 

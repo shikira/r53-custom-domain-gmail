@@ -1,4 +1,12 @@
-.env
-.turbo
-dist
-node_modules
+node_modules/
+dist/
+lib/
+*.js
+*.d.ts
+!jest.config.js
+*.tsbuildinfo
+.env.local
+.DS_Store
+cdk.out/
+coverage/
+.turbo/

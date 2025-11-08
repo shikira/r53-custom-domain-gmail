@@ -18,10 +18,12 @@
     "nodemailer": "^6.10.1"
   },
   "devDependencies": {
+    "@smithy/util-stream": "^4.5.5",
     "@types/mailparser": "^3.4.6",
     "@types/node": "^22.19.0",
     "@types/nodemailer": "^6.4.21",
     "@vitest/coverage-v8": "^2.1.9",
+    "aws-sdk-client-mock": "^4.1.0",
     "esbuild": "^0.24.2",
     "typescript": "^5.7.2",
     "vitest": "^2.1.9"

@@ -4,7 +4,8 @@ import { NagSuppressions } from 'cdk-nag';
 
 export interface IamRolesConstructProps {
   bucketArn: string;
-  secretArn: string;
+  gmailApiSecretArn: string;
+  sesSmtpSecretArn: string;
 }
 
 export class IamRolesConstruct extends Construct {
@@ -30,7 +31,7 @@ export class IamRolesConstruct extends Construct {
     this.lambdaExecutionRole.addToPolicy(
       new iam.PolicyStatement({
         actions: ['secretsmanager:GetSecretValue'],
-        resources: [props.secretArn],
+        resources: [props.gmailApiSecretArn, props.sesSmtpSecretArn],
       })
     );
 
@@ -44,7 +45,7 @@ export class IamRolesConstruct extends Construct {
         {
           id: 'AwsSolutions-IAM5',
           reason: 'Wildcard required for S3 object access in email bucket',
-          appliesTo: ['Resource::arn:aws:s3:::placeholder-bucket/*'],
+          appliesTo: ['Resource::<S3BucketEmailBucket92AABDE7.Arn>/*'],
         },
       ],
       true

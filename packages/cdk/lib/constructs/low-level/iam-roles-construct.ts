@@ -35,6 +35,13 @@ export class IamRolesConstruct extends Construct {
       })
     );
 
+    this.lambdaExecutionRole.addToPolicy(
+      new iam.PolicyStatement({
+        actions: ['xray:PutTraceSegments', 'xray:PutTelemetryRecords'],
+        resources: ['*'],
+      })
+    );
+
     NagSuppressions.addResourceSuppressions(
       this.lambdaExecutionRole,
       [
@@ -44,8 +51,13 @@ export class IamRolesConstruct extends Construct {
         },
         {
           id: 'AwsSolutions-IAM5',
-          reason: 'Wildcard required for S3 object access in email bucket',
-          appliesTo: ['Resource::<EmailReceivingBucketEmailBucket00424D61.Arn>/*'],
+          reason: 'Wildcard required for S3 object access, CloudWatch Logs, and X-Ray tracing',
+          appliesTo: [
+            'Resource::<EmailReceivingBucketEmailBucket00424D61.Arn>/*',
+            'Resource::*',
+            'Action::xray:PutTraceSegments',
+            'Action::xray:PutTelemetryRecords',
+          ],
         },
       ],
       true

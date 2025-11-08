@@ -21,9 +21,12 @@ exports[`IamRolesConstruct > matches snapshot 1`] = `
             {
               "applies_to": [
                 "Resource::<EmailReceivingBucketEmailBucket00424D61.Arn>/*",
+                "Resource::*",
+                "Action::xray:PutTraceSegments",
+                "Action::xray:PutTelemetryRecords",
               ],
               "id": "AwsSolutions-IAM5",
-              "reason": "Wildcard required for S3 object access in email bucket",
+              "reason": "Wildcard required for S3 object access, CloudWatch Logs, and X-Ray tracing",
             },
           ],
         },
@@ -69,9 +72,12 @@ exports[`IamRolesConstruct > matches snapshot 1`] = `
             {
               "applies_to": [
                 "Resource::<EmailReceivingBucketEmailBucket00424D61.Arn>/*",
+                "Resource::*",
+                "Action::xray:PutTraceSegments",
+                "Action::xray:PutTelemetryRecords",
               ],
               "id": "AwsSolutions-IAM5",
-              "reason": "Wildcard required for S3 object access in email bucket",
+              "reason": "Wildcard required for S3 object access, CloudWatch Logs, and X-Ray tracing",
             },
           ],
         },
@@ -91,6 +97,14 @@ exports[`IamRolesConstruct > matches snapshot 1`] = `
                 "arn:aws:secretsmanager:us-east-1:123456789012:secret:gmail",
                 "arn:aws:secretsmanager:us-east-1:123456789012:secret:ses",
               ],
+            },
+            {
+              "Action": [
+                "xray:PutTraceSegments",
+                "xray:PutTelemetryRecords",
+              ],
+              "Effect": "Allow",
+              "Resource": "*",
             },
           ],
           "Version": "2012-10-17",

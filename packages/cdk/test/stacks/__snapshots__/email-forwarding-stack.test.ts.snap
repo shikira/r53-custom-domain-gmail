@@ -289,9 +289,12 @@ exports[`EmailForwardingStack > matches snapshot 1`] = `
             {
               "applies_to": [
                 "Resource::<EmailReceivingBucketEmailBucket00424D61.Arn>/*",
+                "Resource::*",
+                "Action::xray:PutTraceSegments",
+                "Action::xray:PutTelemetryRecords",
               ],
               "id": "AwsSolutions-IAM5",
-              "reason": "Wildcard required for S3 object access in email bucket",
+              "reason": "Wildcard required for S3 object access, CloudWatch Logs, and X-Ray tracing",
             },
           ],
         },
@@ -337,9 +340,12 @@ exports[`EmailForwardingStack > matches snapshot 1`] = `
             {
               "applies_to": [
                 "Resource::<EmailReceivingBucketEmailBucket00424D61.Arn>/*",
+                "Resource::*",
+                "Action::xray:PutTraceSegments",
+                "Action::xray:PutTelemetryRecords",
               ],
               "id": "AwsSolutions-IAM5",
-              "reason": "Wildcard required for S3 object access in email bucket",
+              "reason": "Wildcard required for S3 object access, CloudWatch Logs, and X-Ray tracing",
             },
           ],
         },
@@ -377,6 +383,14 @@ exports[`EmailForwardingStack > matches snapshot 1`] = `
                 },
               ],
             },
+            {
+              "Action": [
+                "xray:PutTraceSegments",
+                "xray:PutTelemetryRecords",
+              ],
+              "Effect": "Allow",
+              "Resource": "*",
+            },
           ],
           "Version": "2012-10-17",
         },
@@ -388,6 +402,51 @@ exports[`EmailForwardingStack > matches snapshot 1`] = `
         ],
       },
       "Type": "AWS::IAM::Policy",
+    },
+    "LambdaFunctionEmailForwarder40AF6711": {
+      "DependsOn": [
+        "IamRolesLambdaExecutionRoleDefaultPolicy2C550E48",
+        "IamRolesLambdaExecutionRole84843478",
+      ],
+      "Metadata": {
+        "cdk_nag": {
+          "rules_to_suppress": [
+            {
+              "id": "AwsSolutions-L1",
+              "reason": "Using Node.js 20.x which is the latest LTS version",
+            },
+          ],
+        },
+      },
+      "Properties": {
+        "Code": {
+          "ZipFile": "exports.handler = async () => ({ statusCode: 200 });",
+        },
+        "Environment": {
+          "Variables": {
+            "GMAIL_USER": "user@gmail.com",
+            "LOG_LEVEL": "INFO",
+            "S3_BUCKET": {
+              "Ref": "EmailReceivingBucketEmailBucket00424D61",
+            },
+          },
+        },
+        "Handler": "index.handler",
+        "MemorySize": 512,
+        "ReservedConcurrentExecutions": 10,
+        "Role": {
+          "Fn::GetAtt": [
+            "IamRolesLambdaExecutionRole84843478",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs20.x",
+        "Timeout": 30,
+        "TracingConfig": {
+          "Mode": "Active",
+        },
+      },
+      "Type": "AWS::Lambda::Function",
     },
     "SecretsGmailApiSecret55D55BD2": {
       "DeletionPolicy": "Delete",

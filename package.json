@@ -12,10 +12,10 @@
     "test:ui": "turbo run test:ui",
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint:fix",
-    "synth": "pnpm --filter @r53-gmail/cdk synth",
-    "diff": "pnpm --filter @r53-gmail/cdk diff",
-    "deploy": "pnpm --filter @r53-gmail/cdk deploy",
-    "destroy": "pnpm --filter @r53-gmail/cdk destroy"
+    "cdk:synth": "pnpm --filter @r53-gmail/cdk cdk:synth",
+    "cdk:diff": "pnpm --filter @r53-gmail/cdk cdk:diff",
+    "cdk:deploy": "pnpm --filter @r53-gmail/cdk cdk:deploy",
+    "cdk:destroy": "pnpm --filter @r53-gmail/cdk cdk:destroy"
   },
   "devDependencies": {
     "turbo": "^2.3.3",

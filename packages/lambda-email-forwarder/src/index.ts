@@ -12,7 +12,7 @@ const logger = new Logger('EmailForwarder');
 
 export const handler = async (event: SESEvent, context: Context): Promise<void> => {
   try {
-    logger.info('Processing SES event', { requestId: context.requestId });
+    logger.info('Processing SES event', { requestId: context.requestId, event: JSON.stringify(event, null, 2) });
 
     const gmailUser = process.env.GMAIL_USER;
     if (!gmailUser) {
@@ -31,8 +31,25 @@ export const handler = async (event: SESEvent, context: Context): Promise<void> 
     const forwarder = new EmailForwarderService(s3Service, gmailService, emailParser, gmailUser);
 
     for (const record of event.Records) {
-      const bucket = record.ses.receipt.action.bucketName;
-      const key = record.ses.receipt.action.objectKey;
+      // Find S3 action in the receipt actions
+      const s3Action = record.ses.receipt.action;
+      let bucket: string | undefined;
+      let key: string | undefined;
+      
+      if (s3Action && 'bucketName' in s3Action && 'objectKey' in s3Action) {
+        bucket = s3Action.bucketName;
+        key = s3Action.objectKey;
+      } else {
+        // Fallback: use environment variable for bucket
+        bucket = process.env.S3_BUCKET;
+        // Extract key from message ID or use a default pattern
+        key = `incoming/${record.ses.mail.messageId}`;
+      }
+      
+      if (!bucket || !key) {
+        logger.error('Missing S3 bucket or key', { bucket, key, record });
+        throw new Error('Unable to determine S3 bucket and key from SES event');
+      }
       
       logger.info('Forwarding email', { bucket, key });
       await forwarder.forwardEmail(bucket, key);

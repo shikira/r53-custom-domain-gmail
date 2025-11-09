@@ -3,6 +3,9 @@ import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
 import { AwsSolutionsChecks } from 'cdk-nag';
 import { EmailForwardingStack } from '../lib/stacks/email-forwarding-stack';
+import * as dotenv from 'dotenv';
+
+dotenv.config({ path: ['.env.local', '.env'] });
 
 const app = new cdk.App();
 

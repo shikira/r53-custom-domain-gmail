@@ -18,9 +18,9 @@
     "cdk:destroy": "pnpm --filter @r53-gmail/cdk cdk:destroy"
   },
   "devDependencies": {
-    "turbo": "^2.3.3",
-    "vitest": "^2.1.8",
+    "@vitest/coverage-v8": "^2.1.8",
     "@vitest/ui": "^2.1.8",
-    "@vitest/coverage-v8": "^2.1.8"
+    "turbo": "^2.3.3",
+    "vitest": "^2.1.8"
   }
 }

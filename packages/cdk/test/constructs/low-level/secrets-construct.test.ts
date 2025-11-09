@@ -12,34 +12,30 @@ describe('SecretsConstruct', () => {
     expect(template.toJSON()).toMatchSnapshot();
   });
 
-  it('creates two secrets', () => {
+  it('references existing secrets', () => {
     const app = new App();
     const stack = new Stack(app, 'TestStack');
     new SecretsConstruct(stack, 'TestSecrets');
     const template = Template.fromStack(stack);
 
-    template.resourceCountIs('AWS::SecretsManager::Secret', 2);
+    template.resourceCountIs('AWS::SecretsManager::Secret', 0);
   });
 
-  it('creates Gmail API secret', () => {
+  it('references Gmail API secret', () => {
     const app = new App();
     const stack = new Stack(app, 'TestStack');
-    new SecretsConstruct(stack, 'TestSecrets');
-    const template = Template.fromStack(stack);
+    const construct = new SecretsConstruct(stack, 'TestSecrets');
 
-    template.hasResourceProperties('AWS::SecretsManager::Secret', {
-      Name: 'email-forwarding/gmail-api-credentials',
-    });
+    expect(construct.gmailApiSecret).toBeDefined();
+    expect(construct.gmailApiSecret.secretName).toBe('gmail-api-credentials');
   });
 
-  it('creates SES SMTP secret', () => {
+  it('references SES SMTP secret', () => {
     const app = new App();
     const stack = new Stack(app, 'TestStack');
-    new SecretsConstruct(stack, 'TestSecrets');
-    const template = Template.fromStack(stack);
+    const construct = new SecretsConstruct(stack, 'TestSecrets');
 
-    template.hasResourceProperties('AWS::SecretsManager::Secret', {
-      Name: 'email-forwarding/ses-smtp-credentials',
-    });
+    expect(construct.sesSmtpSecret).toBeDefined();
+    expect(construct.sesSmtpSecret.secretName).toBe('ses-smtp-credentials');
   });
 });

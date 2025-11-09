@@ -24,9 +24,10 @@ exports[`IamRolesConstruct > matches snapshot 1`] = `
                 "Resource::*",
                 "Action::xray:PutTraceSegments",
                 "Action::xray:PutTelemetryRecords",
+                "Resource::arn:aws:secretsmanager:*:*:secret:gmail-api-credentials*",
               ],
               "id": "AwsSolutions-IAM5",
-              "reason": "Wildcard required for S3 object access, CloudWatch Logs, and X-Ray tracing",
+              "reason": "Wildcard required for S3 object access, CloudWatch Logs, X-Ray tracing, and Secrets Manager access",
             },
           ],
         },
@@ -75,9 +76,10 @@ exports[`IamRolesConstruct > matches snapshot 1`] = `
                 "Resource::*",
                 "Action::xray:PutTraceSegments",
                 "Action::xray:PutTelemetryRecords",
+                "Resource::arn:aws:secretsmanager:*:*:secret:gmail-api-credentials*",
               ],
               "id": "AwsSolutions-IAM5",
-              "reason": "Wildcard required for S3 object access, CloudWatch Logs, and X-Ray tracing",
+              "reason": "Wildcard required for S3 object access, CloudWatch Logs, X-Ray tracing, and Secrets Manager access",
             },
           ],
         },
@@ -86,7 +88,10 @@ exports[`IamRolesConstruct > matches snapshot 1`] = `
         "PolicyDocument": {
           "Statement": [
             {
-              "Action": "s3:GetObject",
+              "Action": [
+                "s3:GetObject",
+                "s3:DeleteObject",
+              ],
               "Effect": "Allow",
               "Resource": "arn:aws:s3:::test-bucket/*",
             },
@@ -96,6 +101,7 @@ exports[`IamRolesConstruct > matches snapshot 1`] = `
               "Resource": [
                 "arn:aws:secretsmanager:us-east-1:123456789012:secret:gmail",
                 "arn:aws:secretsmanager:us-east-1:123456789012:secret:ses",
+                "arn:aws:secretsmanager:*:*:secret:gmail-api-credentials*",
               ],
             },
             {

@@ -22,6 +22,6 @@ describe('EmailForwardingStack', () => {
 
     template.resourceCountIs('AWS::S3::Bucket', 1);
     template.resourceCountIs('AWS::IAM::Role', 2);
-    template.resourceCountIs('AWS::SecretsManager::Secret', 2);
+    template.resourceCountIs('AWS::SecretsManager::Secret', 0);
   });
 });

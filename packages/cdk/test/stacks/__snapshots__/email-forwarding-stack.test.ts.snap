@@ -320,9 +320,10 @@ exports[`EmailForwardingStack > matches snapshot 1`] = `
                 "Resource::*",
                 "Action::xray:PutTraceSegments",
                 "Action::xray:PutTelemetryRecords",
+                "Resource::arn:aws:secretsmanager:*:*:secret:gmail-api-credentials*",
               ],
               "id": "AwsSolutions-IAM5",
-              "reason": "Wildcard required for S3 object access, CloudWatch Logs, and X-Ray tracing",
+              "reason": "Wildcard required for S3 object access, CloudWatch Logs, X-Ray tracing, and Secrets Manager access",
             },
           ],
         },
@@ -371,9 +372,10 @@ exports[`EmailForwardingStack > matches snapshot 1`] = `
                 "Resource::*",
                 "Action::xray:PutTraceSegments",
                 "Action::xray:PutTelemetryRecords",
+                "Resource::arn:aws:secretsmanager:*:*:secret:gmail-api-credentials*",
               ],
               "id": "AwsSolutions-IAM5",
-              "reason": "Wildcard required for S3 object access, CloudWatch Logs, and X-Ray tracing",
+              "reason": "Wildcard required for S3 object access, CloudWatch Logs, X-Ray tracing, and Secrets Manager access",
             },
           ],
         },
@@ -382,7 +384,10 @@ exports[`EmailForwardingStack > matches snapshot 1`] = `
         "PolicyDocument": {
           "Statement": [
             {
-              "Action": "s3:GetObject",
+              "Action": [
+                "s3:GetObject",
+                "s3:DeleteObject",
+              ],
               "Effect": "Allow",
               "Resource": {
                 "Fn::Join": [
@@ -404,11 +409,30 @@ exports[`EmailForwardingStack > matches snapshot 1`] = `
               "Effect": "Allow",
               "Resource": [
                 {
-                  "Ref": "SecretsGmailApiSecret55D55BD2",
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":secretsmanager:us-east-1:123456789012:secret:gmail-api-credentials",
+                    ],
+                  ],
                 },
                 {
-                  "Ref": "SecretsSesSmtpSecretDEAFB27C",
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":secretsmanager:us-east-1:123456789012:secret:ses-smtp-credentials",
+                    ],
+                  ],
                 },
+                "arn:aws:secretsmanager:*:*:secret:gmail-api-credentials*",
               ],
             },
             {
@@ -491,46 +515,6 @@ exports[`EmailForwardingStack > matches snapshot 1`] = `
         },
       },
       "Type": "AWS::Lambda::Permission",
-    },
-    "SecretsGmailApiSecret55D55BD2": {
-      "DeletionPolicy": "Delete",
-      "Metadata": {
-        "cdk_nag": {
-          "rules_to_suppress": [
-            {
-              "id": "AwsSolutions-SMG4",
-              "reason": "Manual credential rotation is acceptable for this use case",
-            },
-          ],
-        },
-      },
-      "Properties": {
-        "Description": "Gmail API OAuth2 credentials for email forwarding",
-        "GenerateSecretString": {},
-        "Name": "email-forwarding/gmail-api-credentials",
-      },
-      "Type": "AWS::SecretsManager::Secret",
-      "UpdateReplacePolicy": "Delete",
-    },
-    "SecretsSesSmtpSecretDEAFB27C": {
-      "DeletionPolicy": "Delete",
-      "Metadata": {
-        "cdk_nag": {
-          "rules_to_suppress": [
-            {
-              "id": "AwsSolutions-SMG4",
-              "reason": "Manual credential rotation is acceptable for this use case",
-            },
-          ],
-        },
-      },
-      "Properties": {
-        "Description": "SES SMTP credentials for sending emails",
-        "GenerateSecretString": {},
-        "Name": "email-forwarding/ses-smtp-credentials",
-      },
-      "Type": "AWS::SecretsManager::Secret",
-      "UpdateReplacePolicy": "Delete",
     },
     "SesReceiptRuleRuleSet9E4A4A56": {
       "Metadata": {

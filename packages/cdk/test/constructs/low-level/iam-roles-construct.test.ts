@@ -53,7 +53,7 @@ describe('IamRolesConstruct', () => {
       PolicyDocument: {
         Statement: Match.arrayWith([
           Match.objectLike({
-            Action: 's3:GetObject',
+            Action: ['s3:GetObject', 's3:DeleteObject'],
             Effect: 'Allow',
             Resource: 'arn:aws:s3:::test-bucket/*',
           }),

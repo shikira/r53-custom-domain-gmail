@@ -3,6 +3,7 @@ import * as ses from 'aws-cdk-lib/aws-ses';
 import * as actions from 'aws-cdk-lib/aws-ses-actions';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as cr from 'aws-cdk-lib/custom-resources';
 import { Construct } from 'constructs';
 import { NagSuppressions } from 'cdk-nag';
 
@@ -38,6 +39,22 @@ export class SesReceiptRuleConstruct extends Construct {
       ],
     });
 
+    // Activate the rule set
+    new cr.AwsCustomResource(this, 'ActivateRuleSet', {
+      onCreate: {
+        service: 'SES',
+        action: 'setActiveReceiptRuleSet',
+        parameters: {
+          RuleSetName: this.ruleSet.receiptRuleSetName,
+        },
+        region: 'us-east-1',
+        physicalResourceId: cr.PhysicalResourceId.of('activate-rule-set'),
+      },
+      policy: cr.AwsCustomResourcePolicy.fromSdkCalls({
+        resources: cr.AwsCustomResourcePolicy.ANY_RESOURCE,
+      }),
+    });
+
     NagSuppressions.addResourceSuppressions(
       this.ruleSet,
       [
@@ -48,5 +65,16 @@ export class SesReceiptRuleConstruct extends Construct {
       ],
       true
     );
+
+    NagSuppressions.addResourceSuppressions(this, [
+      {
+        id: 'AwsSolutions-IAM4',
+        reason: 'Custom resource requires managed policy for SES operations',
+      },
+      {
+        id: 'AwsSolutions-IAM5',
+        reason: 'Custom resource requires wildcard permissions for SES operations',
+      },
+    ]);
   }
 }

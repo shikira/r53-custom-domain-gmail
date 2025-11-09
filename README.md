@@ -59,7 +59,21 @@ AWS SES + Lambdaを活用して、カスタムドメイン（例: `user@example.
    ```bash
    DOMAIN_NAME=example.com \
    GMAIL_USER=user@gmail.com \
-   pnpm --filter @r53-gmail/cdk deploy
+   pnpm --filter @r53-gmail/cdk cdk:deploy
+   ```
+
+   **注意**: 初回デプロイ後、以下の手動設定が必要です：
+   
+   a. **SESドメイン検証** (CDKで自動化済み)
+   ```bash
+   # 検証状況確認
+   aws ses get-identity-verification-attributes --identities example.com --region us-east-1
+   ```
+   
+   b. **SES受信ルールセットのアクティブ化** (CDKで自動化済み)
+   ```bash
+   # アクティブ化確認
+   aws ses describe-active-receipt-rule-set --region us-east-1
    ```
 
 6. **Gmail API設定**
@@ -148,6 +162,19 @@ pnpm destroy
 
 ### SESサンドボックス制限
 本番環境では、SESの本番移行申請が必要です。
+
+### メール受信エラー「アドレス不明」
+以下を確認してください：
+1. SESドメイン検証が完了している
+2. SES受信ルールセットがアクティブになっている
+3. Route53のMXレコードが正しく設定されている
+
+```bash
+# 設定確認コマンド
+aws ses get-identity-verification-attributes --identities your-domain.com --region us-east-1
+aws ses describe-active-receipt-rule-set --region us-east-1
+aws route53 list-resource-record-sets --hosted-zone-id YOUR_ZONE_ID
+```
 
 ### Lambda Cold Start
 Provisioned Concurrencyを設定することで軽減できます。

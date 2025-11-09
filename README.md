@@ -62,11 +62,20 @@ AWS SES + Lambdaを活用して、カスタムドメイン（例: `user@example.
    pnpm --filter @r53-gmail/cdk deploy
    ```
 
-6. **Gmail設定**
+6. **Gmail API設定**
+   ```bash
+   # OAuth認証フローを実行
+   pnpm --filter @r53-gmail/scripts build
+   node packages/scripts/dist/gmail-auth.js client_secret.json
+   ```
+
+7. **Gmail送信設定（オプション）**
    - Gmailの設定 > アカウント > 他のメールアドレスを追加
    - SESのSMTP認証情報を使用
 
-詳細な手順は [実装計画](docs/implementation-plan.md) を参照してください。
+詳細な手順は以下を参照してください：
+- [Gmail API設定ガイド](docs/gmail-setup-guide.md) - OAuth認証とGmail設定の詳細手順
+- [実装計画](docs/implementation-plan.md) - フェーズ別の開発計画
 
 ## 開発
 
@@ -131,6 +140,7 @@ pnpm destroy
 - [要件定義書](docs/requirements.md) - プロジェクトの要件と目的
 - [実装計画](docs/implementation-plan.md) - フェーズ別の開発計画
 - [アーキテクチャ詳細設計](docs/architecture-detail.md) - システム設計の詳細
+- [Gmail API設定ガイド](docs/gmail-setup-guide.md) - OAuth認証とGmail設定の詳細手順
 
 開発者向けガイドは [CLAUDE.md](CLAUDE.md) を参照してください。
 

@@ -96,6 +96,13 @@ importers:
         version: 2.1.9(@types/node@22.19.0)(@vitest/ui@2.1.9)
 
   packages/scripts:
+    dependencies:
+      '@aws-sdk/client-secrets-manager':
+        specifier: ^3.709.0
+        version: 3.927.0
+      googleapis:
+        specifier: ^144.0.0
+        version: 144.0.0
     devDependencies:
       '@types/node':
         specifier: ^22.10.2

@@ -9,5 +9,14 @@ export async function getSecret(secretName: string): Promise<any> {
     throw new Error(`Secret ${secretName} has no string value`);
   }
   
-  return JSON.parse(response.SecretString);
+  try {
+    return JSON.parse(response.SecretString);
+  } catch (error) {
+    console.error('Failed to parse secret as JSON:', {
+      secretName,
+      secretValue: response.SecretString,
+      error: error instanceof Error ? error.message : String(error)
+    });
+    throw new Error(`Invalid JSON in secret ${secretName}: ${error instanceof Error ? error.message : String(error)}`);
+  }
 }

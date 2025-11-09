@@ -19,7 +19,7 @@ export const handler = async (event: SESEvent, context: Context): Promise<void> 
       throw new Error('GMAIL_USER environment variable not set');
     }
 
-    const gmailCredentials = await getSecret('email-forwarding/gmail-api-credentials');
+    const gmailCredentials = await getSecret('gmail-api-credentials');
     
     const s3Client = new S3Client();
     const gmailClient = new GmailClient();

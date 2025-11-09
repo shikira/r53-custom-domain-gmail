@@ -4,23 +4,15 @@ import { RemovalPolicy } from 'aws-cdk-lib';
 import { NagSuppressions } from 'cdk-nag';
 
 export class SecretsConstruct extends Construct {
-  public readonly gmailApiSecret: secretsmanager.Secret;
-  public readonly sesSmtpSecret: secretsmanager.Secret;
+  public readonly gmailApiSecret: secretsmanager.ISecret;
+  public readonly sesSmtpSecret: secretsmanager.ISecret;
 
   constructor(scope: Construct, id: string) {
     super(scope, id);
 
-    this.gmailApiSecret = new secretsmanager.Secret(this, 'GmailApiSecret', {
-      secretName: 'gmail-api-credentials',
-      description: 'Gmail API OAuth2 credentials for email forwarding',
-      removalPolicy: RemovalPolicy.DESTROY,
-    });
+    this.gmailApiSecret = secretsmanager.Secret.fromSecretNameV2(this, 'GmailApiSecret', 'gmail-api-credentials');
 
-    this.sesSmtpSecret = new secretsmanager.Secret(this, 'SesSmtpSecret', {
-      secretName: 'ses-smtp-credentials',
-      description: 'SES SMTP credentials for sending emails',
-      removalPolicy: RemovalPolicy.DESTROY,
-    });
+    this.sesSmtpSecret = secretsmanager.Secret.fromSecretNameV2(this, 'SesSmtpSecret', 'ses-smtp-credentials');
 
     NagSuppressions.addResourceSuppressions(
       [this.gmailApiSecret, this.sesSmtpSecret],

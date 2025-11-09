@@ -31,7 +31,11 @@ export class IamRolesConstruct extends Construct {
     this.lambdaExecutionRole.addToPolicy(
       new iam.PolicyStatement({
         actions: ['secretsmanager:GetSecretValue'],
-        resources: [props.gmailApiSecretArn, props.sesSmtpSecretArn],
+        resources: [
+          props.gmailApiSecretArn,
+          props.sesSmtpSecretArn,
+          `arn:aws:secretsmanager:*:*:secret:gmail-api-credentials*`,
+        ],
       })
     );
 
@@ -51,12 +55,13 @@ export class IamRolesConstruct extends Construct {
         },
         {
           id: 'AwsSolutions-IAM5',
-          reason: 'Wildcard required for S3 object access, CloudWatch Logs, and X-Ray tracing',
+          reason: 'Wildcard required for S3 object access, CloudWatch Logs, X-Ray tracing, and Secrets Manager access',
           appliesTo: [
             'Resource::<EmailReceivingBucketEmailBucket00424D61.Arn>/*',
             'Resource::*',
             'Action::xray:PutTraceSegments',
             'Action::xray:PutTelemetryRecords',
+            'Resource::arn:aws:secretsmanager:*:*:secret:gmail-api-credentials*',
           ],
         },
       ],

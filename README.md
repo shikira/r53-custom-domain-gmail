@@ -62,28 +62,26 @@ AWS SES + Lambdaを活用して、カスタムドメイン（例: `user@example.
    pnpm --filter @r53-gmail/cdk cdk:deploy
    ```
 
-   **注意**: 初回デプロイ後、以下の手動設定が必要です：
-   
-   a. **SESドメイン検証** (CDKで自動化済み)
+6. **SES受信ルールセットのアクティブ化**
    ```bash
-   # 検証状況確認
-   aws ses get-identity-verification-attributes --identities example.com --region us-east-1
-   ```
+   # ルールセット名を確認
+   aws ses list-receipt-rule-sets --region us-east-1
    
-   b. **SES受信ルールセットのアクティブ化** (CDKで自動化済み)
-   ```bash
+   # ルールセットをアクティブ化（example.comを実際のドメイン名に置き換え）
+   aws ses set-active-receipt-rule-set --rule-set-name example.com-rule-set --region us-east-1
+   
    # アクティブ化確認
    aws ses describe-active-receipt-rule-set --region us-east-1
    ```
 
-6. **Gmail API設定**
+7. **Gmail API設定**
    ```bash
    # OAuth認証フローを実行
    pnpm --filter @r53-gmail/scripts build
    node packages/scripts/dist/gmail-auth.js client_secret.json
    ```
 
-7. **Gmail送信設定（オプション）**
+8. **Gmail送信設定（オプション）**
    - Gmailの設定 > アカウント > 他のメールアドレスを追加
    - SESのSMTP認証情報を使用
 
@@ -165,16 +163,32 @@ pnpm destroy
 
 ### メール受信エラー「アドレス不明」
 以下を確認してください：
-1. SESドメイン検証が完了している
-2. SES受信ルールセットがアクティブになっている
-3. Route53のMXレコードが正しく設定されている
 
-```bash
-# 設定確認コマンド
-aws ses get-identity-verification-attributes --identities your-domain.com --region us-east-1
-aws ses describe-active-receipt-rule-set --region us-east-1
-aws route53 list-resource-record-sets --hosted-zone-id YOUR_ZONE_ID
-```
+1. **SESドメイン検証が完了している**
+   ```bash
+   # 検証状況確認
+   aws ses get-identity-verification-attributes --identities your-domain.com --region us-east-1
+   
+   # 未検証の場合は手動で検証を実行
+   aws ses verify-domain-identity --domain your-domain.com --region us-east-1
+   # 出力されたトークンをRoute53の_amazonses.your-domain.com TXTレコードに設定
+   ```
+
+2. **SES受信ルールセットがアクティブになっている**
+   ```bash
+   # アクティブルールセット確認
+   aws ses describe-active-receipt-rule-set --region us-east-1
+   
+   # アクティブでない場合はアクティブ化
+   aws ses set-active-receipt-rule-set --rule-set-name your-domain.com-rule-set --region us-east-1
+   ```
+
+3. **Route53のMXレコードが正しく設定されている**
+   ```bash
+   # MXレコード確認
+   aws route53 list-resource-record-sets --hosted-zone-id YOUR_ZONE_ID | grep -A5 -B5 MX
+   # 期待値: "10 inbound-smtp.us-east-1.amazonaws.com"
+   ```
 
 ### Lambda Cold Start
 Provisioned Concurrencyを設定することで軽減できます。

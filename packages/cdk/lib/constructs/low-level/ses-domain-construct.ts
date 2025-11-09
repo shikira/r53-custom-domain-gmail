@@ -21,13 +21,7 @@ export class SesDomainConstruct extends Construct {
       dkimSigning: true,
     });
 
-    // Add verification record to Route53
-    new route53.TxtRecord(this, 'VerificationRecord', {
-      zone: props.hostedZone,
-      recordName: `_amazonses.${props.domainName}`,
-      values: [this.domain.dkimDnsTokenValue1!],
-      ttl: cdk.Duration.minutes(5),
-    });
+    // Note: Verification record is automatically created by EmailIdentity construct
 
     // Suppress cdk-nag warnings
     NagSuppressions.addResourceSuppressions(this, [

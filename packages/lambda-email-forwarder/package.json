@@ -19,6 +19,7 @@
   },
   "devDependencies": {
     "@smithy/util-stream": "^4.5.5",
+    "@types/aws-lambda": "^8.10.157",
     "@types/mailparser": "^3.4.6",
     "@types/node": "^22.19.0",
     "@types/nodemailer": "^6.4.21",
